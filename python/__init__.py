@@ -10,12 +10,13 @@ import time
 import traceback
 import subprocess
 import sys
-from .dfu import PandaDFU
-from .esptool import ESPROM, CesantaFlasher  # noqa: F401
-from .flash_release import flash_release  # noqa: F401
-from .update import ensure_st_up_to_date  # noqa: F401
-from .serial import PandaSerial  # noqa: F401
-from .isotp import isotp_send, isotp_recv
+from .dfu import PandaDFU  # pylint: disable=import-error
+from .esptool import ESPROM, CesantaFlasher  # noqa pylint: disable=import-error
+from .flash_release import flash_release  # noqa pylint: disable=import-error
+from .update import ensure_st_up_to_date  # noqa pylint: disable=import-error
+from .serial import PandaSerial  # noqa pylint: disable=import-error
+from .isotp import isotp_send, isotp_recv  # pylint: disable=import-error
+
 
 __version__ = '0.0.9'
 
@@ -199,7 +200,7 @@ class Panda(object):
           traceback.print_exc()
         if wait == False or self._handle != None:
           break
-        context = usb1.USBContext() #New context needed so new devices show up
+        context = usb1.USBContext()  # New context needed so new devices show up
     assert(self._handle != None)
     print("connected")
 
