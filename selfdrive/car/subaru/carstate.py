@@ -38,6 +38,9 @@ class CarState(CarStateBase):
     self.right_blinker_cnt = 50 if cp.vl["Dashlights"]['RIGHT_BLINKER'] else max(self.right_blinker_cnt - 1, 0)
     ret.rightBlinker = self.right_blinker_cnt > 0
 
+    ret.leftBlindspot = cp.vl["BSD_RCTA"]['L_ADJACENT'] == 1
+    ret.rightBlindspot = cp.vl["BSD_RCTA"]['R_ADJACENT'] == 1
+
     can_gear = int(cp.vl["Transmission"]['Gear'])
     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(can_gear, None))
 
@@ -48,8 +51,8 @@ class CarState(CarStateBase):
     ret.cruiseState.enabled = cp.vl["CruiseControl"]['Cruise_Activated'] != 0
     ret.cruiseState.available = cp.vl["CruiseControl"]['Cruise_On'] != 0
     ret.cruiseState.speed = cp_cam.vl["ES_DashStatus"]['Cruise_Set_Speed'] * CV.KPH_TO_MS
-    # 1 = imperial, 6 = metric
-    if cp.vl["Dash_State"]['Units'] == 1:
+    # EDM Impreza: 1 = mph, UDM Forester: 7 = mph
+    if cp.vl["Dash_State"]['Units'] in [1, 7]:
       ret.cruiseState.speed *= CV.MPH_TO_KPH
 
     ret.seatbeltUnlatched = cp.vl["Dashlights"]['SEATBELT_FL'] == 1
@@ -87,6 +90,8 @@ class CarState(CarStateBase):
       ("DOOR_OPEN_RL", "BodyInfo", 1),
       ("Units", "Dash_State", 1),
       ("Gear", "Transmission", 0),
+      ("L_ADJACENT", "BSD_RCTA", 0),
+      ("R_ADJACENT", "BSD_RCTA", 0),
     ]
 
     checks = [

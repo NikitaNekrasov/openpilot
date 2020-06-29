@@ -11,7 +11,7 @@ class CarState(CarStateBase):
   def update(self, cp, cp_cam):
     ret = car.CarState.new_message()
 
-    ret.doorOpen = any([cp.vl["CGW1"]['CF_Gway_DrvDrSw'],cp.vl["CGW1"]['CF_Gway_AstDrSw'],
+    ret.doorOpen = any([cp.vl["CGW1"]['CF_Gway_DrvDrSw'], cp.vl["CGW1"]['CF_Gway_AstDrSw'],
                         cp.vl["CGW2"]['CF_Gway_RLDrSw'], cp.vl["CGW2"]['CF_Gway_RRDrSw']])
 
     ret.seatbeltUnlatched = cp.vl["CGW1"]['CF_Gway_DrvSeatBeltSw'] == 0
@@ -62,7 +62,8 @@ class CarState(CarStateBase):
       ret.gasPressed = bool(cp.vl["EMS16"]["CF_Ems_AclAct"])
 
     # TODO: refactor gear parsing in function
-    # Gear Selection via Cluster - For those Kia/Hyundai which are not fully discovered, we can use the Cluster Indicator for Gear Selection, as this seems to be standard over all cars, but is not the preferred method.
+    # Gear Selection via Cluster - For those Kia/Hyundai which are not fully discovered, we can use the Cluster Indicator for Gear Selection,
+    # as this seems to be standard over all cars, but is not the preferred method.
     if self.CP.carFingerprint in FEATURES["use_cluster_gears"]:
       if cp.vl["CLU15"]["CF_Clu_InhibitD"] == 1:
         ret.gearShifter = GearShifter.drive
@@ -88,7 +89,7 @@ class CarState(CarStateBase):
     # Gear Selecton - This is only compatible with optima hybrid 2017
     elif self.CP.carFingerprint in FEATURES["use_elect_gears"]:
       gear = cp.vl["ELECT_GEAR"]["Elect_Gear_Shifter"]
-      if gear in (5, 8): # 5: D, 8: sport mode
+      if gear in (5, 8):  # 5: D, 8: sport mode
         ret.gearShifter = GearShifter.drive
       elif gear == 6:
         ret.gearShifter = GearShifter.neutral
@@ -101,7 +102,7 @@ class CarState(CarStateBase):
     # Gear Selecton - This is not compatible with all Kia/Hyundai's, But is the best way for those it is compatible with
     else:
       gear = cp.vl["LVR12"]["CF_Lvr_Gear"]
-      if gear in (5, 8): # 5: D, 8: sport mode
+      if gear in (5, 8):  # 5: D, 8: sport mode
         ret.gearShifter = GearShifter.drive
       elif gear == 6:
         ret.gearShifter = GearShifter.neutral
@@ -112,11 +113,17 @@ class CarState(CarStateBase):
       else:
         ret.gearShifter = GearShifter.unknown
 
+    ret.stockAeb = cp.vl["FCA11"]['FCA_CmdAct'] != 0
+    ret.stockFcw = cp.vl["FCA11"]['CF_VSM_Warn'] == 2
+    
+    ret.leftBlindspot = cp.vl["LCA11"]["CF_Lca_IndLeft"] != 0
+    ret.rightBlindspot = cp.vl["LCA11"]["CF_Lca_IndRight"] != 0
+
     # save the entire LKAS11 and CLU11
     self.lkas11 = cp_cam.vl["LKAS11"]
     self.clu11 = cp.vl["CLU11"]
     self.park_brake = cp.vl["CGW1"]['CF_Gway_ParkBrakeSw']
-    self.steer_state = cp.vl["MDPS12"]['CF_Mdps_ToiActive'] #0 NOT ACTIVE, 1 ACTIVE
+    self.steer_state = cp.vl["MDPS12"]['CF_Mdps_ToiActive']  # 0 NOT ACTIVE, 1 ACTIVE
     self.lead_distance = cp.vl["SCC11"]['ACC_ObjDist']
 
     return ret
@@ -166,7 +173,10 @@ class CarState(CarStateBase):
 
       ("ESC_Off_Step", "TCS15", 0),
 
-      ("CF_Lvr_GearInf", "LVR11", 0),        #Transmission Gear (0 = N or P, 1-8 = Fwd, 14 = Rev)
+      ("CF_Lvr_GearInf", "LVR11", 0),        # Transmission Gear (0 = N or P, 1-8 = Fwd, 14 = Rev)
+      
+      ("CF_Lca_IndLeft", "LCA11", 0),
+      ("CF_Lca_IndRight", "LCA11", 0),
 
       ("CR_Mdps_StrColTq", "MDPS12", 0),
       ("CF_Mdps_ToiActive", "MDPS12", 0),
@@ -176,6 +186,9 @@ class CarState(CarStateBase):
 
       ("SAS_Angle", "SAS11", 0),
       ("SAS_Speed", "SAS11", 0),
+
+      ("FCA_CmdAct", "FCA11", 0),
+      ("CF_VSM_Warn", "FCA11", 0),
 
       ("MainMode_ACC", "SCC11", 0),
       ("VSetDis", "SCC11", 0),
@@ -197,6 +210,8 @@ class CarState(CarStateBase):
       ("SAS11", 100),
       ("SCC11", 50),
       ("SCC12", 50),
+      ("FCA11", 50),
+      ("LCA11", 50),
     ]
 
     if CP.carFingerprint in EV_HYBRID:
@@ -228,7 +243,7 @@ class CarState(CarStateBase):
       ]
     elif CP.carFingerprint in FEATURES["use_tcu_gears"]:
       signals += [
-        ("CUR_GR", "TCU12",0)
+        ("CUR_GR", "TCU12", 0)
       ]
       checks += [
         ("TCU12", 100)
@@ -238,7 +253,7 @@ class CarState(CarStateBase):
       checks += [("ELECT_GEAR", 20)]
     else:
       signals += [
-        ("CF_Lvr_Gear","LVR12",0)
+        ("CF_Lvr_Gear", "LVR12", 0)
       ]
       checks += [
         ("LVR12", 100)

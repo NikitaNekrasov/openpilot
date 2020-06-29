@@ -6,11 +6,13 @@ import numbers
 
 import dictdiffer
 if "CI" in os.environ:
-  tqdm = lambda x: x
+  def tqdm(x):
+    return x
 else:
-  from tqdm import tqdm
+  from tqdm import tqdm  # type: ignore
 
 from tools.lib.logreader import LogReader
+
 
 def save_log(dest, log_msgs):
   dat = b""
@@ -20,6 +22,7 @@ def save_log(dest, log_msgs):
 
   with open(dest, "wb") as f:
    f.write(dat)
+
 
 def remove_ignored_fields(msg, ignore):
   msg = msg.as_builder()
@@ -32,7 +35,7 @@ def remove_ignored_fields(msg, ignore):
     for k in keys[:-1]:
       try:
         attr = getattr(msg, k)
-      except:
+      except AttributeError:
         break
     else:
       v = getattr(attr, keys[-1])
@@ -45,9 +48,14 @@ def remove_ignored_fields(msg, ignore):
       setattr(attr, keys[-1], val)
   return msg.as_reader()
 
-def compare_logs(log1, log2, ignore_fields=[], ignore_msgs=[]):
-  filter_msgs = lambda m: m.which() not in ignore_msgs
-  log1, log2 = [list(filter(filter_msgs, log)) for log in (log1, log2)]
+
+def compare_logs(log1, log2, ignore_fields=None, ignore_msgs=None):
+  if ignore_fields is None:
+    ignore_fields = []
+
+  if ignore_msgs is None:
+    ignore_msgs = []
+  log1, log2 = [list(filter(lambda m: m.which() not in ignore_msgs, log)) for log in (log1, log2)]
   assert len(log1) == len(log2), "logs are not same length: " + str(len(log1)) + " VS " + str(len(log2))
 
   diff = []
@@ -62,9 +70,10 @@ def compare_logs(log1, log2, ignore_fields=[], ignore_msgs=[]):
     if msg1_bytes != msg2_bytes:
       msg1_dict = msg1.to_dict(verbose=True)
       msg2_dict = msg2.to_dict(verbose=True)
-      dd = dictdiffer.diff(msg1_dict, msg2_dict, ignore=ignore_fields, tolerance=0)
+      dd = dictdiffer.diff(msg1_dict, msg2_dict, ignore=ignore_fields)
       diff.extend(dd)
   return diff
+
 
 if __name__ == "__main__":
   log1 = list(LogReader(sys.argv[1]))

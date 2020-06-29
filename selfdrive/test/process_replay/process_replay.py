@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
+import capnp
 import os
 import sys
 import threading
 import importlib
 
 if "CI" in os.environ:
-  tqdm = lambda x: x
+  def tqdm(x):
+    return x
 else:
-  from tqdm import tqdm
+  from tqdm import tqdm   # type: ignore
 
 from cereal import car, log
 from selfdrive.car.car_helpers import get_car
@@ -19,6 +21,7 @@ from collections import namedtuple
 
 ProcessConfig = namedtuple('ProcessConfig', ['proc_name', 'pub_sub', 'ignore', 'init_callback', 'should_recv_callback'])
 
+
 def wait_for_event(evt):
   if not evt.wait(15):
     if threading.currentThread().getName() == "MainThread":
@@ -27,6 +30,7 @@ def wait_for_event(evt):
     else:
       # done testing this process, let it die
       sys.exit(0)
+
 
 class FakeSocket:
   def __init__(self, wait=True):
@@ -58,10 +62,15 @@ class FakeSocket:
   def wait_for_recv(self):
     wait_for_event(self.recv_called)
 
+
 class DumbSocket:
   def __init__(self, s=None):
     if s is not None:
-      dat = messaging.new_message(s)
+      try:
+        dat = messaging.new_message(s)
+      except capnp.lib.capnp.KjException:  # pylint: disable=c-extension-no-member
+        # lists
+        dat = messaging.new_message(s, 0)
       self.data = dat.to_bytes()
 
   def receive(self, non_blocking=False):
@@ -69,6 +78,7 @@ class DumbSocket:
 
   def send(self, dat):
     pass
+
 
 class FakeSubMaster(messaging.SubMaster):
   def __init__(self, services):
@@ -92,7 +102,6 @@ class FakeSubMaster(messaging.SubMaster):
     wait_for_event(self.update_ready)
     self.update_ready.clear()
 
-
   def update_msgs(self, cur_time, msgs):
     wait_for_event(self.update_called)
     self.update_called.clear()
@@ -102,15 +111,16 @@ class FakeSubMaster(messaging.SubMaster):
   def wait_for_update(self):
     wait_for_event(self.update_called)
 
+
 class FakePubMaster(messaging.PubMaster):
-  def __init__(self, services):
+  def __init__(self, services):  # pylint: disable=super-init-not-called
     self.data = {}
     self.sock = {}
     self.last_updated = None
     for s in services:
       try:
         data = messaging.new_message(s)
-      except:
+      except capnp.lib.capnp.KjException:
         data = messaging.new_message(s, 0)
       self.data[s] = data.as_reader()
       self.sock[s] = DumbSocket()
@@ -188,7 +198,7 @@ def calibration_rcv_callback(msg, CP, cfg, fsm):
   # calibrationd publishes 1 calibrationData every 5 cameraOdometry packets.
   # should_recv always true to increment frame
   if msg.which() == 'carState':
-    if ((fsm.frame +1)% 25) == 0:
+    if ((fsm.frame + 1) % 25) == 0:
       recv_socks = ["liveCalibration"]
     else:
       recv_socks = []
@@ -203,7 +213,7 @@ CONFIGS = [
     pub_sub={
       "can": ["controlsState", "carState", "carControl", "sendcan", "carEvents", "carParams"],
       "thermal": [], "health": [], "liveCalibration": [], "dMonitoringState": [], "plan": [], "pathPlan": [], "gpsLocation": [], "liveLocationKalman": [],
-      "model": [],
+      "model": [], "frame": [],
     },
     ignore=["logMonoTime", "valid", "controlsState.startMonoTime", "controlsState.cumLagMs"],
     init_callback=fingerprint,
@@ -249,6 +259,17 @@ CONFIGS = [
     init_callback=get_car_params,
     should_recv_callback=None,
   ),
+  ProcessConfig(
+    proc_name="locationd",
+    pub_sub={
+      "cameraOdometry": ["liveLocationKalman"],
+      "sensorEvents": [], "gpsLocationExternal": [], "liveCalibration": [], "carState": [],
+    },
+    ignore=["logMonoTime", "valid"],
+    init_callback=get_car_params,
+    should_recv_callback=None,
+  ),
+
 ]
 
 def replay_process(cfg, lr):

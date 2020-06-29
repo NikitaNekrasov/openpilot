@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-import paramiko
+import paramiko  # pylint: disable=import-error
 import os
 import sys
 import re
@@ -11,7 +11,7 @@ def start_build(name):
   ssh = paramiko.SSHClient()
   ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-  key_file = open(os.path.join(os.path.dirname(__file__), "id_rsa_public"))
+  key_file = open(os.path.join(os.path.dirname(__file__), "../tools/ssh/key/id_rsa"))
   key = paramiko.RSAKey.from_private_key(key_file)
 
   print("SSH to phone {}".format(name))

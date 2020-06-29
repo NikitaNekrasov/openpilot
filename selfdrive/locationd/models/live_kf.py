@@ -46,7 +46,7 @@ class LiveKalman():
                         0, 0, 0])
 
   # state covariance
-  initial_P_diag = np.array([1e14, 1e14, 1e14,
+  initial_P_diag = np.array([1e16, 1e16, 1e16,
                              1e6, 1e6, 1e6,
                              1e4, 1e4, 1e4,
                              1**2, 1**2, 1**2,
@@ -80,7 +80,7 @@ class LiveKalman():
     omega = state[States.ANGULAR_VELOCITY, :]
     vroll, vpitch, vyaw = omega
     roll_bias, pitch_bias, yaw_bias = state[States.GYRO_BIAS, :]
-    odo_scale = state[States.ODO_SCALE, :][0,:]
+    odo_scale = state[States.ODO_SCALE, :][0, :]
     acceleration = state[States.ACCELERATION, :]
     imu_angles = state[States.IMU_OFFSET, :]
 

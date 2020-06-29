@@ -13,7 +13,7 @@ def process_hud_alert(enabled, fingerprint, visual_alert, left_lane,
 
   # initialize to no line visible
   sys_state = 1
-  if left_lane and right_lane or sys_warning:  #HUD alert only display when LKAS status is active
+  if left_lane and right_lane or sys_warning:  # HUD alert only display when LKAS status is active
     if enabled or sys_warning:
       sys_state = 3
     else:
@@ -89,14 +89,13 @@ class CarController():
         # interval after 6 msgs
         if self.resume_cnt > 5:
           self.last_resume_frame = frame
-          self.clu11_cnt = 0
+          self.resume_cnt = 0
     # reset lead distnce after the car starts moving
     elif self.last_lead_distance != 0:
       self.last_lead_distance = 0
 
-
     # 20 Hz LFA MFA message
-    if frame % 5 == 0 and self.car_fingerprint in [CAR.SONATA, CAR.PALISADE]:
+    if frame % 5 == 0 and self.car_fingerprint in [CAR.SONATA, CAR.PALISADE, CAR.IONIQ]:
       can_sends.append(create_lfa_mfa(self.packer, frame, enabled))
 
     return can_sends

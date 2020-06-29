@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcapnp-dev \
     clang \
     cmake \
+    cppcheck \
     curl \
     ffmpeg \
     git \
@@ -45,7 +46,6 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-# Install python dependencies
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
 ENV PATH="/root/.pyenv/bin:/root/.pyenv/shims:${PATH}"
 
@@ -71,14 +71,15 @@ RUN pyenv install 3.8.2 && \
       azure-storage-common==2.1.0 \
       azure-storage-nspkg==3.1.0 \
       pycurl==7.43.0.3 \
-      coverage==5.1
+      coverage==5.1 \
+      pre-commit==2.4.0 \
+      parameterized==0.7.4
 
 RUN mkdir -p /tmp/openpilot
 
 COPY SConstruct \
-     flake8_openpilot.sh \
-     pylint_openpilot.sh \
      .pylintrc \
+     .pre-commit-config.yaml \
      .coveragerc-app \
      /tmp/openpilot/
 
