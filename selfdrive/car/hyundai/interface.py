@@ -127,22 +127,23 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
     elif candidate in [CAR.IONIQ, CAR.IONIQ_EV_LTD]:
-      # ret.lateralTuning.pid.kf = 0.00004
+      ret.lateralTuning.pid.kf = 0.00005
       ret.mass = 1490. + STD_CARGO_KG   #weight per hyundai site https://www.hyundaiusa.com/ioniq-electric/specifications.aspx
       ret.wheelbase = 2.7
       ret.steerRatio = 10.1   #Tuned
       tire_stiffness_factor = 0.385
-      # ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
-      # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13], [0.009]]
+      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.,25.], [0.]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.08,0.13], [0.005]]
       
-      ret.lateralTuning.init('indi')
-      ret.lateralTuning.indi.innerLoopGain = 4.0
-      ret.lateralTuning.indi.outerLoopGain = 3.0
-      ret.lateralTuning.indi.timeConstant = 1.0
-      ret.lateralTuning.indi.actuatorEffectiveness = 1.0
+      # ret.lateralTuning.init('indi')
+      # ret.lateralTuning.indi.innerLoopGain = 4.0
+      # ret.lateralTuning.indi.outerLoopGain = 3.0
+      # ret.lateralTuning.indi.timeConstant = 1.0
+      # ret.lateralTuning.indi.actuatorEffectiveness = 1.0
       
       ret.minSteerSpeed = 31 * CV.MPH_TO_MS
-      ret.steerRateCost = 0.8 
+      ret.steerActuatorDelay = 0.4  # Default delay
+      ret.steerRateCost = 0.45 
     elif candidate == CAR.KIA_FORTE:
       ret.lateralTuning.pid.kf = 0.00005
       ret.mass = 3558. * CV.LB_TO_KG
